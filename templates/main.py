@@ -1,20 +1,26 @@
-from fastapi import FastAPI, BackgroundTasks, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+import telebot
 import time
+from threading import Thread
 
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+# 1. Put your token from BotFather here
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+bot = telebot.TeleBot(BOT_TOKEN)
 
-# This is your "Background Worker" function
-def log_heavy_task(message: str):
-    time.sleep(5) # Simulating a slow process (like sending an email or updating data)
-    print(f"Background worker successfully finished: {message}")
+# 2. This handles your /start command
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "👋 Hello! I am live and responding to your commands!")
 
-@app.get("/", response_class=HTMLResponse)
-async def read_faq(request: Request, background_tasks: BackgroundTasks):
-    # Trigger the background worker without making the user wait for it to finish
-    background_tasks.add_task(log_heavy_task, "FAQ page was viewed!")
-    
-    # Instantly load the page for the user
-    return templates.TemplateResponse("faq.html", {"request": request})
+# 3. This handles your background tasks (simulating your background worker)
+def background_worker():
+    while True:
+        print("Background worker is quietly processing data...")
+        time.sleep(10)  # Runs every 10 seconds
+
+# Start the background worker thread
+worker_thread = Thread(target=background_worker, daemon=True)
+worker_thread.start()
+
+# 4. Tell the bot to start looking for messages permanently
+print("Bot is starting up...")
+bot.infinity_polling()
