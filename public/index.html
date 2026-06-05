@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">FAQ Chatbot</div>
+        <div class="chat-box" id="chatBox">
+            <div class="message bot-message">Hello! Ask me a question like "What is your name?" or "What are your hours?".</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your question here..." autocomplete="off">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Helper function to append a new message bubble to the chat box
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+            msgDiv.textContent = text;
+            chatBox.appendChild(msgDiv);
+            // Automatically scroll to the bottom of the chat history
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Core function to send message to the backend API
+        async function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (!messageText) return;
+
+            // Display user message instantly
+            appendMessage(messageText, 'user');
+            userInput.value = '';
+
+            try {
+                // Post the question to the backend server
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: messageText })
+                });
+                
+                const data = await response.json();
+                // Display the bot's response
+                appendMessage(data.reply, 'bot');
+            } catch (error) {
+                console.error("Error communicating with server:", error);
+                appendMessage("Error: Could not reach the server.", 'bot');
+            }
+        }
+
+        // Event listeners for button click and pressing "Enter" key
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
